@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Storico | Meteo Roma</title>
+  <link rel="stylesheet" href="/static/style.css"><script defer src="/static/dashboard.js"></script>
+</head>
+<body data-page="history">
+<header class="topbar"><div class="topbar-inner">
+  <a class="brand" href="/">☀ <span>Meteo <strong>Roma</strong></span></a>
+  <nav aria-label="Navigazione principale"><a href="/">Previsioni</a><a href="/storico" aria-current="page">Storico</a><a href="/valutazioni">Valutazioni</a><a href="/italia">Italia</a></nav>
+  <span class="source-badge">OPEN-METEO · UTC</span>
+</div></header>
+<main class="shell">
+  <div class="page-head"><div><p class="eyebrow">DATI STORICI</p><h1>Esplora lo storico</h1><p class="subtitle">Andamento giornaliero per Roma, fino all'ultima giornata disponibile nel CSV.</p></div><div class="control"><label for="history-days">Periodo</label><select id="history-days"><option value="30">Ultimi 30 giorni</option><option value="90" selected>Ultimi 90 giorni</option><option value="365">Ultimo anno</option></select></div></div>
+  <div id="history-status" class="status" role="status">Caricamento dati storici…</div>
+  <section id="history-content" hidden>
+    <div class="metrics-grid" id="history-cards"></div>
+    <div class="section-title"><div><p class="eyebrow">SERIE GIORNALIERE</p><h2>Andamento nel tempo</h2><p class="subtitle" id="history-range"></p></div></div>
+    <div class="chart-grid" id="history-charts"></div>
+    <p class="notice">Fonte: Historical Weather API di Open-Meteo. Sono dati di rianalisi/modello su griglia, non misure dirette di una singola stazione. Date e aggregazioni sono in UTC.</p>
+  </section>
+</main>
+<footer>Prototipo di ricerca · Non utilizzare per decisioni di sicurezza o allerta</footer>
+</body></html>

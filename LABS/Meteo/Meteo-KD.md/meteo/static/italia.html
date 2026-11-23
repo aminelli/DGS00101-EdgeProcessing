@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Italia | Meteo</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <script defer src="/static/dashboard.js"></script><script defer src="/static/national.js"></script>
+</head>
+<body data-page="national">
+<header class="topbar"><div class="topbar-inner">
+  <a class="brand" href="/">☀ <span>Meteo <strong>Italia</strong></span></a>
+  <nav aria-label="Navigazione principale"><a href="/">Previsioni Roma</a><a href="/storico">Storico</a><a href="/valutazioni">Valutazioni</a><a href="/italia" aria-current="page">Italia</a></nav>
+</div></header>
+<main class="shell">
+  <div class="page-head"><div><p class="eyebrow">TEACHER NAZIONALE · STUDENT TERRITORIALI</p><h1>Previsioni per l'Italia</h1><p class="subtitle">Seleziona un territorio e un capoluogo per consultare lo student dedicato.</p></div></div>
+  <p class="notice">Le previsioni sono puntuali nei capoluoghi, non medie dell'intera regione o provincia. I modelli nazionali sono separati dal modello operativo di Roma.</p>
+  <div class="metrics-grid">
+    <div class="control"><label for="national-level">Livello</label><select id="national-level"><option value="region">Regione</option><option value="province">Provincia / unità territoriale</option></select></div>
+    <div class="control"><label for="national-territory">Territorio</label><select id="national-territory"></select></div>
+    <div class="control"><label for="national-point">Capoluogo</label><select id="national-point"></select></div>
+  </div>
+  <div class="section-title"><button id="national-load" class="button" disabled>Mostra previsione student</button></div>
+  <div id="national-status" class="status" role="status">Caricamento catalogo…</div>
+  <section id="national-forecast" hidden>
+    <div class="section-title"><div><p class="eyebrow">STUDENT · D+2</p><h2 id="national-date"></h2><p class="subtitle" id="national-detail"></p></div></div>
+    <div class="metrics-grid" id="national-cards"></div>
+  </section>
+  <div class="section-title"><div><p class="eyebrow">DISTILLAZIONE · TEST CRONOLOGICO</p><h2>Confronto dei modelli</h2><p class="subtitle">MAE: valori inferiori sono migliori. Il confronto riguarda lo stesso territorio e lo stesso periodo di test.</p></div></div>
+  <div id="national-evaluation-status" class="status" role="status"></div>
+  <section id="national-evaluation" hidden>
+    <p id="national-evaluation-context" class="notice"></p>
+    <div id="national-evaluation-charts" class="chart-grid"></div>
+  </section>
+  <div class="info-panel"><strong>Come funziona</strong><p>Il teacher apprende dai capoluoghi nazionali; ogni student territoriale apprende dalle sue previsioni e dai valori storici. Il modello supervisionato usa solo i valori storici. La distillazione non garantisce un miglioramento: verifica il confronto sul test.</p></div>
+</main>
+<footer>Prototipo di ricerca · Non utilizzare per decisioni di sicurezza o allerta</footer>
+</body></html>

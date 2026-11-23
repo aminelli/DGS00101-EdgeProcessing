@@ -1,0 +1,11 @@
+{
+  "location_name": "Roma",
+  "latitude": 41.9028,
+  "longitude": 12.4964,
+  "timezone": "UTC",
+  "history_years": 10,
+  "data_dir": "data",
+  "artifacts_dir": "artifacts",
+  "request_timeout_seconds": 30,
+  "hybrid_ml_weight": 0.5
+}

@@ -1,0 +1,156 @@
+Metadata-Version: 2.4
+Name: rome-weather-forecast
+Version: 0.1.0
+Summary: Pipeline ibrida ML/NWP per previsioni meteo giornaliere su Roma
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+Requires-Dist: fastapi>=0.110
+Requires-Dist: joblib>=1.3
+Requires-Dist: numpy>=1.26
+Requires-Dist: pandas>=2.1
+Requires-Dist: requests>=2.31
+Requires-Dist: scikit-learn>=1.4
+Requires-Dist: uvicorn[standard]>=0.27
+Provides-Extra: edge
+Requires-Dist: onnx>=1.15; extra == "edge"
+Requires-Dist: onnxruntime>=1.17; extra == "edge"
+Requires-Dist: skl2onnx>=1.16; extra == "edge"
+Provides-Extra: test
+Requires-Dist: pytest>=8.0; extra == "test"
+
+# Previsioni meteo per Roma
+
+Progetto dimostrativo per previsioni giornaliere a 24 ore, con un modello ML addestrato sullo storico Open-Meteo e una previsione NWP operativa consultata separatamente. La soluzione ibrida espone un blend configurabile, ma non lo considera validato: non viene scaricata una serie storica di previsioni NWP per calibrare o fare backtest del blend.
+
+## Ipotesi e ambito
+
+- Località iniziale: Roma, coordinate `41.9028`, `12.4964`.
+- Storico: ultimi tre anni disponibili, acquisiti in UTC in blocchi di 90 giorni.
+- Orizzonte ML: domani in UTC; poiché lo storico è acquisito fino a ieri, il target è due giorni dopo l'ultimo giorno UTC completo. La data effettiva compare sempre nella risposta API.
+- Target continui: temperatura massima giornaliera (`°C`), precipitazione totale (`mm`), velocità massima del vento (`km/h`).
+- Dati storici Open-Meteo Archive sono dati di rianalisi/modello su griglia, non misure di una stazione romana. Per una validazione con osservazioni puntuali si deve aggiungere una fonte di stazioni, ad esempio SIARL/ARSIAL, dopo averne verificato copertura e condizioni d'accesso.
+- La GUI è predisposta per la singola località di training. Coordinate diverse richiedono un modello addestrato e verificato per quella località.
+- I pesi ML/NWP sono un parametro operativo configurabile, non appresi da un backtest storico.
+
+## Architettura e file
+
+```text
+meteo/
+  config.py       Configurazione e percorsi
+  data.py         Download Archive e forecast, controlli qualità
+  features.py     Aggregazione giornaliera e feature causali D -> D+2
+  training.py     Split cronologico, baseline, training, export ONNX
+  inference.py    Caricamento modello, chiamata NWP e blend
+  cli.py          Comandi pipeline
+  web.py          API FastAPI e pagina web
+  static/         Interfaccia HTML
+data/
+  raw/            Risposte JSON archiviate (generate)
+  processed/      CSV orari e feature (generati)
+  sample/         Esempio sintetico, non utilizzabile per valutare il modello
+artifacts/        Modelli, metriche ed esportazioni (generati)
+tests/            Test offline
+```
+
+## Requisiti e installazione
+
+Richiede Python 3.10 o successivo. Dalla cartella del progetto:
+
+```powershell
+py -3 -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+python -m pip install -e ".[test]"
+```
+
+Per esportare ONNX e provare la quantizzazione:
+
+```powershell
+python -m pip install -e ".[edge]"
+```
+
+La quantizzazione dinamica dipende dagli operatori supportati da ONNX Runtime. L'esportatore verifica l'equivalenza ONNX/Scikit-learn e registra esplicitamente se il formato quantizzato non è supportato o non supera il controllo di qualità.
+
+## Configurazione e comandi
+
+Copiare `config.example.json` in `config.json` e modificare i valori necessari. I percorsi relativi nel file di configurazione sono risolti rispetto alla cartella in cui si trova il file. Non sono necessarie API key per l'uso base di Open-Meteo; è necessaria una connessione Internet.
+
+```powershell
+python -m meteo.cli --config config.json fetch-history
+python -m meteo.cli --config config.json prepare
+python -m meteo.cli --config config.json train
+python -m meteo.cli --config config.json export
+```
+
+`fetch-history` salva le risposte originali sotto `data/raw/` e il CSV normalizzato in `data/processed/weather_hourly.csv`. `prepare` scrive `training_features.csv`. `train` salva i modelli e le metriche in `artifacts/`. `export` è opzionale e richiede gli extra `edge`.
+
+Le chiamate API possono richiedere diversi minuti. Timeout ed errori HTTP interrompono il comando con un messaggio esplicito; i blocchi completati restano disponibili come JSON grezzi. Rilanciare il comando ripete la raccolta, non fonde in modo incrementale dati parziali.
+
+### Campi e unità del CSV orario
+
+| Colonna                               | Unità         |
+| ------------------------------------- | ------------- |
+| `timestamp`                           | ISO 8601 UTC  |
+| `location`                            | Nome località |
+| `temperature_2m`, `dew_point_2m`      | °C            |
+| `relative_humidity_2m`, `cloud_cover` | %             |
+| `precipitation`                       | mm nell'ora   |
+| `pressure_msl`                        | hPa           |
+| `wind_speed_10m`                      | km/h          |
+| `wind_direction_10m`                  | gradi         |
+| `shortwave_radiation`                 | W/m²          |
+
+Nei riepiloghi giornalieri `precipitation_sum` è in mm/giorno, `shortwave_radiation_sum` in Wh/m²/giorno; i target mantengono le unità della relativa variabile.
+
+## Training e valutazione
+
+Gli esempi sono costruiti ordinando i giorni in modo cronologico. Per prevedere domani, il target di ogni riga è il giorno `D+2` e le feature includono le statistiche osservate fino al giorno `D`, i lag di 1, 2, 3 e 7 giorni e la stagionalità annuale. Questo allineamento consente di usare l'ultimo giorno completo disponibile (ieri) per produrre la previsione di domani. I giorni con meno di 24 osservazioni sono esclusi. La suddivisione è 70% train, 15% validation, 15% test in ordine temporale; gli score di validation e test sono riportati separatamente.
+
+Per ogni target viene addestrato un Random Forest e confrontato su validation e test con la persistenza del valore del giorno precedente. Le metriche `MAE`, `RMSE` e `R²` sono salvate in `artifacts/metrics.json`. Sono metriche di regressione: non si genera una matrice di confusione perché i target non sono classi. L'export ONNX salva in `artifacts/export_report.json` dimensioni e tempi di inferenza misurati sul batch di verifica; i tempi sono indicativi e dipendono dall'hardware.
+
+L'API `/api/forecast` restituisce il risultato ML per domani, i dati NWP operativi per sette giorni e il blend quando le date coincidono. Se il dato NWP target non è disponibile, il blend è omesso e lo stato lo dichiara. Il modello NWP è fornito dal servizio Open-Meteo; non viene implementata una simulazione atmosferica proprietaria.
+
+## API e interfaccia
+
+Avviare il server:
+
+```powershell
+uvicorn meteo.web:app --reload
+```
+
+- `GET /`: GUI per Roma.
+- `GET /health`: stato dell'applicazione e presenza del modello.
+- `GET /api/forecast`: previsioni ML, NWP e blend.
+- `GET /docs`: documentazione interattiva OpenAPI.
+
+Prima di eseguire il training, `/api/forecast` risponde `503` indicando che il modello non è disponibile. Errori del servizio dati esterno sono esposti come `502` senza dettagli interni.
+
+## Test
+
+```powershell
+python -m pip install -e ".[test]"
+pytest
+```
+
+I test sono offline e usano dati sintetici generati in memoria. `data/sample/weather_hourly_synthetic.csv` è un piccolo esempio leggibile, esplicitamente sintetico e troppo breve per addestrare o valutare un modello.
+
+## Open-Meteo: fonti e limiti
+
+- **Archivio storico**: `https://archive-api.open-meteo.com/v1/archive`; il codice richiede le nove variabili orarie dichiarate in `meteo/data.py`.
+- **Previsione operativa**: `https://api.open-meteo.com/v1/forecast`; il servizio seleziona il modello NWP disponibile e restituisce sette giorni di target giornalieri.
+- **Timezone**: `UTC`, usato per mantenere coerenti aggregazione e orizzonte. Le date locali di Roma possono non coincidere con il giorno UTC.
+- **Attribuzione/licenza**: verificare i termini aggiornati di Open-Meteo e includere l'attribuzione richiesta nella distribuzione dei dati o del servizio.
+- Le API possono aggiornare dati, modelli e disponibilità. Il codice salva i JSON grezzi e controlla la forma delle risposte, ma non congela la versione del modello NWP remoto.
+- Il servizio di previsione richiede accesso a Internet; training, test e preparazione si possono eseguire offline dopo aver acquisito o fornito il CSV.
+
+## Troubleshooting
+
+- **Timeout o HTTP error**: verificare connettività, limiti del servizio e riprovare; i JSON dei blocchi già scaricati non vengono cancellati.
+- **Dati incompleti / pochi esempi**: controllare che il CSV copra un periodo sufficiente e contenga giornate complete; il training richiede almeno 100 esempi giornalieri validi.
+- **Errore ONNX**: installare gli extra `edge`; se un operatore non è convertibile, l'esportazione fallisce esplicitamente senza dichiarare l'artefatto verificato.
+- **Quantizzazione non disponibile**: verificare `export_report.json`; alcuni modelli ad alberi non offrono operatori quantizzabili nella versione/runtime installata.
+- **Errore 502 nell'app**: verificare la disponibilità dell'endpoint Open-Meteo e la connessione del server.
+
+## Limiti noti
+
+Il sistema è un prototipo didattico, addestrato su una sola località e su dati di rianalisi. Non è progettato per decisioni di sicurezza o allerta. La validazione temporale non sostituisce una valutazione meteorologica operativa su dati osservativi. Il blend ML/NWP usa un peso configurato e deve essere considerato sperimentale finché non viene calibrato e valutato con previsioni NWP archiviate e osservazioni indipendenti.

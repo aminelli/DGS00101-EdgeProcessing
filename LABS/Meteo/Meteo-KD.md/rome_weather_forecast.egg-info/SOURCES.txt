@@ -1,0 +1,17 @@
+README.md
+pyproject.toml
+meteo/__init__.py
+meteo/cli.py
+meteo/config.py
+meteo/data.py
+meteo/features.py
+meteo/inference.py
+meteo/training.py
+meteo/web.py
+meteo/static/index.html
+rome_weather_forecast.egg-info/PKG-INFO
+rome_weather_forecast.egg-info/SOURCES.txt
+rome_weather_forecast.egg-info/dependency_links.txt
+rome_weather_forecast.egg-info/requires.txt
+rome_weather_forecast.egg-info/top_level.txt
+tests/test_features.py

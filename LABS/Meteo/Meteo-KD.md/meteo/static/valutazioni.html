@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Valutazioni | Meteo Roma</title>
+  <link rel="stylesheet" href="/static/style.css"><script defer src="/static/dashboard.js"></script>
+</head>
+<body data-page="evaluation">
+<header class="topbar"><div class="topbar-inner">
+  <a class="brand" href="/">☀ <span>Meteo <strong>Roma</strong></span></a>
+  <nav aria-label="Navigazione principale"><a href="/">Previsioni</a><a href="/storico">Storico</a><a href="/valutazioni" aria-current="page">Valutazioni</a><a href="/italia">Italia</a></nav>
+  <span class="source-badge">RISULTATI DI TEST</span>
+</div></header>
+<main class="shell">
+  <div class="page-head"><div><p class="eyebrow">ANALISI DEI MODELLI</p><h1>Valutazione dei risultati</h1><p class="subtitle">Confronta l'errore dei modelli con i rispettivi riferimenti sul test.</p></div><div class="control"><label for="report-type">Valutazione</label><select id="report-type"><option value="operativo">Modello operativo</option><option value="sperimentale">Esperimento</option><option value="avanzato">Esperimento avanzato NWP</option></select></div></div>
+  <div id="evaluation-status" class="status" role="status">Caricamento risultati…</div>
+  <section id="evaluation-content" hidden>
+    <p class="notice" id="evaluation-context"></p>
+    <div class="metrics-grid" id="evaluation-cards"></div>
+    <div class="section-title"><div><p class="eyebrow">CONFRONTO SUL TEST</p><h2>Errore medio assoluto</h2><p class="subtitle">Un MAE più basso indica un errore medio inferiore. Le unità differiscono per variabile.</p></div></div>
+    <div class="chart-grid" id="evaluation-charts"></div>
+    <div id="rain-matrix" class="matrix-section"></div>
+    <div class="section-title"><div><p class="eyebrow">GRAFICI DEL TRAINING</p><h2>Storico e previsioni</h2><p class="subtitle">Grafici generati dal relativo comando di training o sperimentazione.</p></div></div>
+    <div class="plot-grid" id="evaluation-plots"></div>
+    <div class="info-panel"><strong>Interpretazione</strong><p>MAE e RMSE più bassi sono migliori; R² può essere negativo. Non confrontare direttamente errori espressi in unità diverse o risultati su periodi di test diversi.</p></div>
+  </section>
+</main>
+<footer>Prototipo di ricerca · Non utilizzare per decisioni di sicurezza o allerta</footer>
+</body></html>
