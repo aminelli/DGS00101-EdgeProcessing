@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Previsioni | Meteo Roma</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <script defer src="/static/dashboard.js"></script>
+</head>
+<body data-page="forecast">
+<header class="topbar"><div class="topbar-inner">
+  <a class="brand" href="/">☀ <span>Meteo <strong>Roma</strong></span></a>
+  <nav aria-label="Navigazione principale"><a href="/" aria-current="page">Previsioni</a><a href="/storico">Storico</a><a href="/valutazioni">Valutazioni</a></nav>
+  <span class="source-badge">OPEN-METEO · UTC</span>
+</div></header>
+<main class="shell">
+  <div class="page-head"><div><p class="eyebrow">OSSERVATORIO METEO</p><h1>Previsioni per Roma</h1><p class="subtitle">Un confronto tra modello ML, previsione numerica e soluzione ibrida.</p></div><button id="load-forecast" class="button">↻ Aggiorna previsione</button></div>
+  <div id="forecast-status" class="status" role="status">Seleziona «Aggiorna previsione» per caricare i dati.</div>
+  <section id="forecast-content" hidden>
+    <div class="section-title"><div><p class="eyebrow">MODELLO OPERATIVO · D+2</p><h2 id="forecast-date">Giorno previsto</h2></div><span class="pill">Roma, Italia</span></div>
+    <div class="metrics-grid" id="forecast-cards"></div>
+    <p class="notice" id="forecast-notice"></p>
+    <div class="section-title"><div><p class="eyebrow">OPEN-METEO · NWP</p><h2>Prossimi giorni</h2><p class="subtitle">Previsioni numeriche giornaliere disponibili dal servizio.</p></div></div>
+    <div class="chart-grid" id="forecast-charts"></div>
+    <div class="table-wrap"><table><caption>Previsioni NWP giornaliere</caption><thead><tr><th>Data UTC</th><th>Temp. max</th><th>Precipitazioni</th><th>Vento max</th></tr></thead><tbody id="forecast-table"></tbody></table></div>
+  </section>
+  <section class="info-panel"><strong>Come leggere i risultati</strong><p>ML usa lo storico disponibile; NWP proviene da Open-Meteo. Il valore ibrido è una media pesata sperimentale, non calibrata su previsioni NWP storiche.</p></section>
+</main>
+<footer>Prototipo di ricerca · Non utilizzare per decisioni di sicurezza o allerta</footer>
+</body></html>

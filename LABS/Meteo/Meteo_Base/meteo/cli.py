@@ -1,0 +1,69 @@
+"""Comandi per acquisizione, preparazione, training ed esportazione."""
+
+from __future__ import annotations
+
+import argparse
+import logging
+from datetime import date
+
+from meteo.config import load_settings
+from meteo.data import fetch_history, read_hourly_csv
+from meteo.features import build_training_frame
+from meteo.training import export_onnx, format_test_results, train_models
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description="Pipeline meteo per Roma")
+    parser.add_argument("--config", help="Percorso a un file JSON di configurazione")
+    subparsers = parser.add_subparsers(dest="command", required=True)
+    subparsers.add_parser("fetch-history", help="Scarica lo storico Open-Meteo")
+    subparsers.add_parser("prepare", help="Crea CSV giornaliero e feature di training")
+    subparsers.add_parser("train", help="Addestra e valuta i modelli")
+    subparsers.add_parser("experiment", help="Confronta modelli sperimentali senza sostituire quelli operativi")
+    nwp_parser = subparsers.add_parser("fetch-nwp-history", help="Scarica le previsioni NWP archiviate")
+    nwp_parser.add_argument("--start-date", type=date.fromisoformat, default=date(2024, 1, 1))
+    nwp_parser.add_argument("--end-date", type=date.fromisoformat)
+    subparsers.add_parser("advanced-experiment", help="Confronta modelli e NWP con validazione rolling")
+    subparsers.add_parser("export", help="Esporta e verifica i modelli ONNX")
+    args = parser.parse_args()
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
+    settings = load_settings(args.config)
+
+    if args.command == "fetch-history":
+        frame = fetch_history(settings)
+        print(f"Salvate {len(frame)} righe orarie in {settings.hourly_csv}")
+    elif args.command == "prepare":
+        hourly = read_hourly_csv(settings.hourly_csv)
+        frame, columns = build_training_frame(hourly)
+        settings.processed_dir.mkdir(parents=True, exist_ok=True)
+        frame.to_csv(settings.features_csv, index=False, date_format="%Y-%m-%dT%H:%M:%SZ")
+        print(f"Salvati {len(frame)} esempi e {len(columns)} feature in {settings.features_csv}")
+    elif args.command == "train":
+        hourly = read_hourly_csv(settings.hourly_csv)
+        metrics = train_models(hourly, settings)
+        print(format_test_results(metrics))
+    elif args.command == "experiment":
+        from meteo.experiments import format_experiment_results, run_experiments
+
+        hourly = read_hourly_csv(settings.hourly_csv)
+        print(format_experiment_results(run_experiments(hourly, settings)))
+    elif args.command == "fetch-nwp-history":
+        from meteo.nwp_history import default_nwp_end_date, fetch_nwp_history
+
+        result = fetch_nwp_history(settings, args.start_date, args.end_date or default_nwp_end_date())
+        print(f"Salvate {len(result)} giornate di previsioni NWP archiviate.")
+    elif args.command == "advanced-experiment":
+        from meteo.advanced import format_advanced_results, run_advanced_experiment
+
+        hourly = read_hourly_csv(settings.hourly_csv)
+        print(format_advanced_results(run_advanced_experiment(hourly, settings)))
+    elif args.command == "export":
+        hourly = read_hourly_csv(settings.hourly_csv)
+        report = export_onnx(settings, hourly)
+        print(f"Report ONNX: {settings.artifacts_dir / 'export_report.json'}")
+        for target, result in report["onnx"].items():
+            print(f"{target}: verified={result['verified']}, max_abs_error={result['max_absolute_error']:.6g}")
+
+
+if __name__ == "__main__":
+    main()
