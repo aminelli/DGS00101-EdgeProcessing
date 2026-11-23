@@ -1,0 +1,12 @@
+README.md
+pyproject.toml
+quant_weather/__init__.py
+quant_weather/cli.py
+quant_weather/data.py
+quant_weather/pipeline.py
+rome_weather_onnx_quantization.egg-info/PKG-INFO
+rome_weather_onnx_quantization.egg-info/SOURCES.txt
+rome_weather_onnx_quantization.egg-info/dependency_links.txt
+rome_weather_onnx_quantization.egg-info/requires.txt
+rome_weather_onnx_quantization.egg-info/top_level.txt
+tests/test_quantization.py

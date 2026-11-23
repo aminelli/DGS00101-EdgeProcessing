@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "rome-weather-onnx-quantization"
+version = "0.1.0"
+description = "Progetto isolato per esportare e quantizzare modelli meteo compatibili con ONNX Runtime"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "numpy>=1.26",
+    "onnx>=1.15",
+    "onnxruntime>=1.17",
+    "pandas>=2.1",
+    "scikit-learn>=1.4",
+    "skl2onnx>=1.16",
+]
+
+[project.optional-dependencies]
+test = ["pytest>=8.0"]
+
+[tool.setuptools.packages.find]
+include = ["quant_weather*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
