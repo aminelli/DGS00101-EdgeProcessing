@@ -5,7 +5,7 @@
          1. Import del dato, lettura metadati e geocoding su ellissoide -> pre-processing standard (in teoria fattibile anche su GPU)
          2. Segmentazione dell’area alluvionata -> AI
      4. Esempio di prodotto:  https://mapping.emergency.copernicus.eu/activations/EMSR865/    <- attenzione: come prodotto va inteso solo il contenuto vettoriale con i poligoni delle aree alluvionate esposto su mappa.
-
+ 
 
 
 
