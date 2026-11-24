@@ -32,6 +32,7 @@ Non limitarti a descrivere un'architettura teorica: sviluppa un progetto softwar
 Realizza una pipeline Python completa e riproducibile che addestri un modello di deep learning di [segmentazione semantica] per [mappatura delle alluvioni] usando come etichette i dati vettoriali delle attivazioni Copernicus Emergency Management Service (CEMS) Rapid Mapping con codice EMSR (mapping.emergency.copernicus.eu) e come input immagini [Sentinel-1 GRD (VV, VH) + DEM/pendenza].
 
 ## Contesto e obiettivo del modello di AI da generare
+
 - **Fenomeno target:** [es. mappatura estensione allagamenti / flood delineation]
 - **Tipo di prodotto EMSR usato come target/etichetta:** [es. strati vettoriali/raster di Delineation - DEL, distinguendo area allagata, acqua permanente e area valida non allagata]
 - **Sensore di input osservativo:** [es. ESA Copernicus Sentinel-1 Level-1 GRD in polarizzazione VV/VH, pre- e post-evento]
@@ -72,6 +73,13 @@ Tieni conto del fatto che:
 
 - Le attivazioni EMSR forniscono quasi solo vettori (Shapefile/GeoJSON) di tipo delineation/grading, NON le immagini di input: le immagini vanno recuperate separatamente da [Copernicus Data Space Ecosystem (STAC/OData)] e abbinate per area e data.
 - I poligoni coprono solo l'AOI mappata dall'analista: fuori dall'AOI le etichette sono sconosciute e vanno trattate con una maschera "ignore" (valore 255), non come classe negativa.
+
+IMPORTANTE:
+
+- Attieniti solo ed esclusivamente all'attivazione EMSR865
+- usa il file "cems_rapidmapping_openapi_specs.yaml" per mappare le API; si tratta delle specifiche OpenAPI del servizio.
+- Nel codice python evita di riscaricare dati di cui già hai effettuato il download; tieni quindi traccia delle chiamate per evitare nei test di riscaricare sempre gli
+- Se i dati di EMSR865 non consentono di costruire un dataset di training verificabile, fermati prima del training: spiega il limite e proponi il passo minimo necessario per proseguire.
 
 ## Acquisizione delle immagini satellitari
 
@@ -354,6 +362,7 @@ Definisci la struttura del progetto, i moduli Python, le interfacce e i flussi d
 **FASE 3 – Data Ingestion**
 
 Implementa il recupero delle attivazioni EMSR e dei relativi prodotti.
+Attieniti solo all'attivazione EMSR865.
 
 **FASE 4 – Dataset Engineering**
 
@@ -387,17 +396,33 @@ Se mancano informazioni, dichiaralo esplicitamente e chiedi i dati necessari.
 
 Non inventare dettagli tecnici.
 
+## Documentazione e output di ogni fase implementativa
 
-## Note generali
+Per ciascuna fase approvata, indica in modo conciso:
 
-Usa una nomenclatura inglese per il codice, script etc. 
-Commenta in italiano il codice con un approccio documentale chiaro ed esplicativo sullo scope.
+1. file creati o modificati e relativo scopo;
+2. dipendenze e comandi di installazione necessari;
+3. comandi di esecuzione e un esempio realistico;
+4. test o verifiche eseguiti e relativo esito;
+5. limitazioni, dati mancanti e decisioni richieste.
 
-Genera un dictionary e documentazione in markdown di tutte le sigle che hai adottato con relativa spiegazione; 
-fai lo stesso per i topics toccati di maggior interesse e sui dettagli tecnologici; questo file deve spiegare gli aspetti tecnologici (non è quindi la documentazione del progetto python)
+Al completamento del progetto, prepara:
 
-Genera in markdown una documentazione di porogetto in italiano che sia dettagliata e contenente tutto il necessario (comandi, info utili etc.); questo deve fungere da documentazione di progetto.
+- documentazione di progetto in italiano, con installazione, configurazione, comandi, flussi, output e limiti;
+- un glossario Markdown delle sigle utilizzate;
+- un documento Markdown separato per i principali argomenti e dettagli tecnologici, distinto dalla documentazione d'uso del progetto.
 
-Sii preciso, tecnico, e spiega bene i passaggi.
+Non produrre questi documenti finali prima che le fasi e le scelte corrispondenti siano state approvate e implementate.
 
-Se hai bisogno di altro per aspetti che non sono riuscito a descrivere o che ho descritto male, ponimi le domande prima di iniziare a generare il tutto.
+
+
+## Requisiti trasversali di implementazione
+
+- Usa una nomenclatura inglese per il codice, script etc. 
+- Commenta in italiano il codice con un approccio documentale chiaro ed esplicativo sullo scope.
+- Genera un dictionary e documentazione in markdown di tutte le sigle che hai adottato con relativa spiegazione; fai lo stesso per i topics toccati di maggior interesse e sui dettagli tecnologici; questo file deve spiegare gli aspetti tecnologici (non è quindi la documentazione del progetto python)
+- Genera in markdown una documentazione di porogetto in italiano che sia dettagliata e contenente tutto il necessario (comandi, info utili etc.); questo deve fungere da documentazione di progetto.
+- Sii preciso, tecnico, e spiega bene i passaggi.
+- Se hai bisogno di altro per aspetti che non sono riuscito a descrivere o che ho descritto male, ponimi le domande prima di iniziare a generare il tutto.
+- Non introdurre dipendenze o servizi non necessari alla demo.
+- Fornisci codice eseguibile, non pseudocodice, salvo dipendenze da servizi o informazioni non disponibili; in tal caso delimita chiaramente ciò che manca.
