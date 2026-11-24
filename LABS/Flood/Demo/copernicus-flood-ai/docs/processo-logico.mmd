@@ -1,0 +1,60 @@
+flowchart TD
+    subgraph ING["1 · Ingestion e verifica"]
+        CEMS["CEMS EMSR865<br/>Metadati e prodotti DEL"]
+        STAC["CDSE STAC<br/>Ricerca scene Sentinel-1 VV/VH"]
+        MATCH{"Associazione CEMS–STAC<br/>verificata?"}
+        EXCLUDE["Candidati non verificati<br/>esclusi dal download"]
+        DOWNLOAD["Download esplicito COG verificati<br/>S3 oppure HTTPS con OIDC"]
+        REGISTRY["Registro locale<br/>dimensioni e SHA-256"]
+        CEMS --> MATCH
+        STAC --> MATCH
+        MATCH -->|No| EXCLUDE
+        MATCH -->|Sì| DOWNLOAD
+        DOWNLOAD --> REGISTRY
+    end
+
+    subgraph DATA["2 · Costruzione del dataset"]
+        CHECK{"Tutti gli asset verificati<br/>e checksum validi?"}
+        BLOCK_DATA["Errore: preprocessing bloccato"]
+        STACK["Riproiezione da CRS o GCP<br/>mosaico VV/VH e ritaglio AOI"]
+        LABEL["Maschera CEMS<br/>1 allagamento · 0 background assunto · 255 ignore"]
+        PATCH["Patch e split spaziali<br/>train / validation / test"]
+        READY{"Ogni split contiene<br/>entrambe le classi?"}
+        BLOCK_TRAIN["Dataset non pronto<br/>training e valutazione bloccati"]
+        MANIFEST["Manifesti dataset e patch<br/>pronti per training"]
+        CHECK -->|No| BLOCK_DATA
+        CHECK -->|Sì| STACK
+        STACK --> LABEL --> PATCH --> READY
+        READY -->|No| BLOCK_TRAIN
+        READY -->|Sì| MANIFEST
+    end
+
+    CEMS --> CHECK
+    MATCH -->|Associazioni verificate| CHECK
+    REGISTRY --> CHECK
+
+    subgraph LEARN["3 · Training e valutazione"]
+        NORM["Log1p e normalizzazione VV/VH<br/>statistiche calcolate sul train"]
+        TRAIN["Training U-Net<br/>validazione ed early stopping"]
+        MODEL["Checkpoint migliore<br/>pesi e statistiche"]
+        EVAL["Valutazione sul test spaziale<br/>metriche e matrice di confusione"]
+        NORM --> TRAIN --> MODEL --> EVAL
+    end
+
+    MANIFEST --> NORM
+    MANIFEST --> EVAL
+
+    subgraph PRED["4 · Inferenza e demo"]
+        SELECT["Selezione stack e AOI<br/>CLI oppure patch nella demo web"]
+        INFER["Normalizzazione e inferenza U-Net<br/>soglia e maschera AOI"]
+        OUT["Maschera e probabilità GeoTIFF<br/>GeoJSON · PNG · manifesto<br/>GeoPackage se ci sono poligoni"]
+        UI["Demo Streamlit<br/>anteprima e download della patch"]
+        SELECT --> INFER --> OUT
+        OUT --> UI
+    end
+
+    STACK --> SELECT
+    CEMS --> SELECT
+    MANIFEST -.->|Selezione patch nella demo| SELECT
+    MODEL --> INFER
+

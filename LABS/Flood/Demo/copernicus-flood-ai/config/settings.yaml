@@ -1,0 +1,14 @@
+activation_code: EMSR865
+data_root: data
+
+cems:
+  api_root: https://mapping.emergency.copernicus.eu
+  download_products: true
+
+cdse:
+  stac_root: https://stac.dataspace.copernicus.eu/v1
+  discover_sentinel_candidates: true
+
+http:
+  timeout_seconds: 60
+  retries: 3

@@ -1,0 +1,7 @@
+__pycache__/
+.pytest_cache/
+*.py[cod]
+
+# Dati Copernicus, cache API e risultati del modello.
+/data/
+
